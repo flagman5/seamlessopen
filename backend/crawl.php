@@ -1,5 +1,6 @@
 <?php
 //need good cURL requests
+include('common.php');
 
 //import area list
 $areas = file("areas.txt");
@@ -7,7 +8,7 @@ $areas = file("areas.txt");
 foreach($areas as $area) {
   $url = "https://www.zillow.com/".$area."/open-house/";
   
-  $result = do_curl($url);
+  $result = do_curl($url, "http://www.google.com");
   
   $delimiter = '<script type="application/ld+json">';
   $set = array_shift(explode($delimiter, $result));
