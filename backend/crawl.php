@@ -13,6 +13,8 @@ foreach($areas as $area) {
   $delimiter = '<script type="application/ld+json">';
   $set = array_shift(explode($delimiter, $result));
   
+  $paginate_info = $set[count($set)-1];
+  
   foreach($set as $house) {
     $house_info = explode("</script>", $house);
     $house_json_info = json_decode($house_info[0], TRUE);
@@ -27,5 +29,7 @@ foreach($areas as $area) {
     //['location']['address']['addressRegion']
     //['url']
   }
+  
+  //now we do the paginate
   
 } 
