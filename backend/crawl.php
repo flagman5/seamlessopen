@@ -16,7 +16,7 @@ foreach($areas as $area) {
   $max_page_and_pages = explode($delim, $paginate_info);
   
   $max_page_info = $max_page_and_pages[1];
-  $max_paginate = preg_match("/\>(\d)\<\/a\>/", $max_page_info, $match);
+  preg_match("/\>(\d)\<\/a\>/", $max_page_info, $match);
   $max = $match[0];
   
   for($i=2;$i<=$max;$i++) {
