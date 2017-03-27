@@ -1,32 +1,36 @@
 <?php
+include('common.php');
 
 //import area list
 $areas = file("areas.txt");
 
 foreach($areas as $area) {
+  
   //need DB to get list of URLs to go
   //$db_result = mysql_query("SELECT url FROM openhouses WHERE agent_number is null AND area = $area");
   
   foreach($db_result as $url) {
-    do {
-    //construct the cURL
-    $curl = curl_init();
-    $config['useragent'] = 'Mozilla/5.0 (Windows NT 6.2; WOW64; rv:17.0) Gecko/20100101 Firefox/17.0';
-    curl_setopt($curl, CURLOPT_USERAGENT, $config['useragent']);
-    curl_setopt($curl, CURLOPT_REFERER, 'https://www.google.com/');
-    $dir = dirname(__FILE__);
-    $config['cookie_file'] = $dir . '/cookies/' . md5($_SERVER['REMOTE_ADDR']) . '.txt';
-    curl_setopt($curl, CURLOPT_COOKIEFILE, $config['cookie_file']);
-    curl_setopt($curl, CURLOPT_COOKIEJAR, $config['cookie_file']);
-    curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($curl, CURLOPT_URL,$url);
-    $result = curl_exec($curl);
-    } while(empty($result));
+    $result = do_curl($url, "http://www.google.com");
     
-    $delimiter = 'class="profile-name-link"';
-    $agent_url = 
+    $delimiter = 'class="profile-name-link">';
+    $agent_info = explode($delimiter, $result);
+    
+    preg_match("/(.*)\<\/a\>\<\/span\>/", $agent_info[1], $match);
+    $agent_name = $match[0];
+    preg_match("/\<a\shref=\"(.*)\"\sclass/",  $agent_info[1], $match);
+    $agent_profile = explode("/", $match[0]);
+    $agent_profile_name = $agent_profile[2];
+    
+    sleep(rand(1,5));
+    $agent_url = "https://www.zillow.com/profile/".$agent_profile_name."/";
+    $result = do_curl($agent_url, $url);
+    
+    preg_match("/\<a\srel=\"nofollow\"\shref=\"(.*)\"\starget=\"_blank\"\>Website\<\/a\>/", $result, $match);
+    $agent_own_url = $match[0];
+    
+    $result = do_curl($agent_own_url, "http://www.google.com");
+    //here come the hard part
+    
     
   }
 }
