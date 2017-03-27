@@ -25,11 +25,15 @@ foreach($areas as $area) {
     $agent_url = "https://www.zillow.com/profile/".$agent_profile_name."/";
     $result = do_curl($agent_url, $url);
     
-    preg_match("/\<a\srel=\"nofollow\"\shref=\"(.*)\"\starget=\"_blank\"\>Website\<\/a\>/", $result, $match);
-    $agent_own_url = $match[0];
-    
-    $result = do_curl($agent_own_url, "http://www.google.com");
-    //here come the hard part
+    if(preg_match("/\<a\srel=\"nofollow\"\shref=\"(http:\/\/www\.facebook\.com.*)\"\starget=\"_blank\"\>\<span\sclass=\"facebook\"\>Facebook\<\/span\>\<\/a\>/", $result, $match)) {
+      $agent_fb_url = $match[0];
+      
+      //now need to do a FB message
+    }
+    else {
+      //this agent has no facebook, giving up
+      //set in db not to use this listing
+    }
     
     
   }
