@@ -2,6 +2,8 @@
 
 //need to use the FB SDK
 
+$query = $agent."|realty|real+estate|realtor";
+
 $request = new FacebookRequest(
   $session,
   'GET',
