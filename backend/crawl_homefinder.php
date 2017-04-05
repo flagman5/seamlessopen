@@ -42,6 +42,8 @@ function parse_results($result) {
     $state = $matches[1];
     preg_match("/postalCode\"\scontent=\"(.*)\"/", $parts[4], $matches);
     $zipcode = $matches[1];
+    preg_match("/member\">\s(.*)<\/div>\s<p/", $parts[5], $matches);
+    $agent = $matches[1];
     
   } 
 }
