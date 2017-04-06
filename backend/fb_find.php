@@ -2,7 +2,7 @@
 
 //need to use the FB SDK
 
-$query = $agent."|realty|real+estate|realtor";
+$query = $agent."+real+estate";
 
 $request = new FacebookRequest(
   $session,
