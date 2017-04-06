@@ -44,6 +44,8 @@ function parse_results($result) {
     $zipcode = $matches[1];
     preg_match("/member\">\s(.*)<\/div>\s<p/", $parts[5], $matches);
     $agent = $matches[1];
+    preg_match("/brand\">\s(.*)<\/div>\s<div/", $parts[5], $matches);
+    $agency = $matches[1];
     
   } 
 }
