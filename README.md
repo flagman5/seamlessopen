@@ -15,7 +15,6 @@ Backend:
  
  App:
  - splash screen: get started button with form to fill out, store profile
- - If address is not within NJ, display NJ only 
  - logged in: edit profile, view history or start open housing
   - edit profile
   - view history: list of attended open houses
