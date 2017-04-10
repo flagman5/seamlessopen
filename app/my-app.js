@@ -103,11 +103,26 @@ myApp.onPageInit('home', function (page) {
 	// Listen to geofences
 	var triggedFences = [];
 	bgGeo.on('geofence', function(params, taskId) {
-		triggedFences.push(params);
 		
 		var geoFenceLocation    = params.location;
 		var geoFenceidentifier  = params.identifier;
 		var geoFenceAction = params.action;
+		
+		//first get the center of fence and replace it with location, we cant handle calculating with respect to house orientation
+		var geoFenceCenter;
+		bgGeo.getGeofences(function(geofences) {
+			  var maxNumGeofences = geofences.length;
+			  for (var i=0; i<maxNumGeofences; i++ ) {
+				if(geofences[i].identifier == params.identifier) {
+					params.location = geofences[i].location;
+				}
+			  }
+			}, function(error) {
+			  console.warn("Failed to fetch geofences from server");
+		});
+		
+		//add to list of trigged fences
+		triggedFences.push(params);
 		
 		//we only care about triggers that are done without a car or bicycle
 		if(geoFenceAction == 'ENTER' && geoFenceLocation.activity != 'in_vehicle' && geoFenceLocation.activity != 'on_bicycle') {
