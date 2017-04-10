@@ -333,7 +333,7 @@ function recordVisit(geoFenceIdentifier, deviceID) {
 		success: function(data) {
 			bgGeo.stopWatchPosition();
 			
-			//resume low accuracy, ideally pause would be best..
+			//resume geofence tracking only, ideally pause would be best..
 			bgGeo.setConfig({
 				desiredAccuracy: 1000,
 				distanceFilter: 10,
@@ -343,6 +343,11 @@ function recordVisit(geoFenceIdentifier, deviceID) {
 				console.log("- setConfig success");
 			}, function(){
 				console.warn("- Failed to setConfig");
+			});
+			
+			//start geofence only tracking mode
+			bgGeo.startGeofences(function(state) {
+				console.log('- Geofence-only monitoring started', state.trackingMode);
 			});
 			
 		},
