@@ -7,20 +7,22 @@ function crawl_homefinder($zip) {
   $url = "http://www.homefinder.com/zip-code/".$zip."/open-house/";
   
   $page = 1;
+  $total_page = 0;
   do {
      $result = do_curl($url, "http://www.google.com");
      $data_array = explode('<div id="leftColumn">', $result);
      
-     if($page == 1) {
-       preg_match('/page\"\>\sPage\s1\sof\s(\d+)\s/', $data_array[1], $matches);
-       $total_page = $matches[1];
+    if(strpos($data_array[1],'noResultsMessage') !== false) {
+       if($page == 1) {
+         preg_match('/page\"\>\sPage\s1\sof\s(\d+)\s/', $data_array[1], $matches);
+         $total_page = $matches[1];
+       }
+       parse_results($data_array[1]);
      }
-  
-     parse_results($data_array[1]);
     
      $page++;
      $url = "http://www.homefinder.com/zip-code/".$zip."/open-house/?page=".$page;
-  } while($total_page <= $page);
+  } while($total_page >= $page);
   
   
   
