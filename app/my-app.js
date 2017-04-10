@@ -333,6 +333,9 @@ function recordVisit(geoFenceIdentifier, deviceID) {
 		success: function(data) {
 			bgGeo.stopWatchPosition();
 			
+			//stop the service
+			bgGeo.stop();
+			
 			//resume geofence tracking only, ideally pause would be best..
 			bgGeo.setConfig({
 				desiredAccuracy: 1000,
