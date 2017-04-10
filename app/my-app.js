@@ -333,7 +333,18 @@ function recordVisit(geoFenceIdentifier, deviceID) {
 		success: function(data) {
 			bgGeo.stopWatchPosition();
 			
-			//geofenceInitialTriggerEntry 
+			//resume low accuracy, ideally pause would be best..
+			bgGeo.setConfig({
+				desiredAccuracy: 1000,
+				distanceFilter: 10,
+				activityRecognitionInterval: 10000,
+				geofenceInitialTriggerEntry: false
+			},function(){
+				console.log("- setConfig success");
+			}, function(){
+				console.warn("- Failed to setConfig");
+			});
+			
 		},
 		error: function(xhr, textStatus, errorThrown){
 			console.log("error in recording visit");
