@@ -107,84 +107,86 @@ myApp.onPageInit('home', function (page) {
 		var geoFenceLocation    = params.location;
 		var geoFenceidentifier  = params.identifier;
 		var geoFenceAction = params.action;
-		
-		//first get the center of fence and replace it with location, we cant handle calculating with respect to house orientation
-		var geoFenceCenter;
-		bgGeo.getGeofences(function(geofences) {
-			  var maxNumGeofences = geofences.length;
-			  for (var i=0; i<maxNumGeofences; i++ ) {
-				if(geofences[i].identifier == params.identifier) {
-					params.location = geofences[i].location;
-				}
-			  }
-			}, function(error) {
-			  console.warn("Failed to fetch geofences from server");
-		});
-		
-		//add to list of trigged fences
-		triggedFences.push(params);
-		
 		//we only care about triggers that are done without a car or bicycle
-		if(geoFenceAction == 'ENTER' && geoFenceLocation.activity != 'in_vehicle' && geoFenceLocation.activity != 'on_bicycle') {
+		if(geoFenceLocation.activity != 'in_vehicle' && geoFenceLocation.activity != 'on_bicycle') {
 			
-			//first check the state of the plugin, if already aggressive, then no need to restart it   
-			if(checkAggressive() == 0) {
-			  //stop the geofenceonly mode?
-			  bgGeo.stop();
-			  
-			  //config location tracking with highest accuracy
-			  bgGeo.setConfig({
-				desiredAccuracy: 0,
-				distanceFilter: 5,
-				activityRecognitionInterval: 0
-			  },function(){
-				  console.log("- setConfig success");
-			  }, function(){
-				  console.warn("- Failed to setConfig");
-			  });
-			  //turn on plugin normally
-			  bgGeo.start();
+			//first get the center of fence and replace it with location, we cant handle calculating with respect to house orientation
+			var geoFenceCenter;
+			bgGeo.getGeofences(function(geofences) {
+				  var maxNumGeofences = geofences.length;
+				  for (var i=0; i<maxNumGeofences; i++ ) {
+					if(geofences[i].identifier == params.identifier) {
+						params.location = geofences[i].location;
+					}
+				  }
+				}, function(error) {
+				  console.warn("Failed to fetch geofences from server");
+			});
+
+			//add to list of trigged fences
+			triggedFences.push(params);
+
+
+			if(geoFenceAction == 'ENTER') {
+
+				//first check the state of the plugin, if already aggressive, then no need to restart it   
+				if(checkAggressive() == 0) {
+				  //stop the geofenceonly mode?
+				  bgGeo.stop();
+
+				  //config location tracking with highest accuracy
+				  bgGeo.setConfig({
+					desiredAccuracy: 0,
+					distanceFilter: 5,
+					activityRecognitionInterval: 0
+				  },function(){
+					  console.log("- setConfig success");
+				  }, function(){
+					  console.warn("- Failed to setConfig");
+				  });
+				  //turn on plugin normally
+				  bgGeo.start();
+				}
+				else {
+					//secondary geofence trigger, restart the aggressive tracking
+					bgGeo.stopWatchPosition();
+				}
+
+				//aggressive tracking
+				startAggressiveTracking(triggedFences, deviceID);
 			}
-			else {
-				//secondary geofence trigger, restart the aggressive tracking
-				bgGeo.stopWatchPosition();
-			}
-			
-			//aggressive tracking
-			startAggressiveTracking(triggedFences, deviceID);
-		}
-		else if(geoFenceAction == 'EXIT') {
-			//have to check if user is in another geofence, if not, can simply resume tracking only mode
-			
-			//first remove the one exited
-			for(var i = triggedFences.length - 1; i >= 0; i--) {
-				if(triggedFences[i].identifier == geoFenceidentifier) {
-				   triggedFences.splice(i, 1);
+			else if(geoFenceAction == 'EXIT') {
+				//have to check if user is in another geofence, if not, can simply resume tracking only mode
+
+				//first remove the one exited
+				for(var i = triggedFences.length - 1; i >= 0; i--) {
+					if(triggedFences[i].identifier == geoFenceidentifier) {
+					   triggedFences.splice(i, 1);
+					}
+				}
+
+				//check if in aggressive mode, only reset if in aggressive mode
+				if(triggedFences.length == 0 && checkAggressive() == 1) {
+					//no more gfences, resume tracking only mode
+					bgGeo.stop();
+
+					bgGeo.setConfig({
+						desiredAccuracy: 1000,
+						distanceFilter: 10,
+						activityRecognitionInterval: 10000
+					},function(){
+						console.log("- setConfig success");
+					}, function(){
+						console.warn("- Failed to setConfig");
+					});
+
+					//start geofence only tracking mode
+					bgGeo.startGeofences(function(state) {
+						console.log('- Geofence-only monitoring started', state.trackingMode);
+					});
 				}
 			}
-			
-			//check if in aggressive mode, only reset if in aggressive mode
-			if(triggedFences.length == 0 && checkAggressive() == 1) {
-				//no more gfences, resume tracking only mode
-				bgGeo.stop();
-				
-				bgGeo.setConfig({
-					desiredAccuracy: 1000,
-					distanceFilter: 10,
-					activityRecognitionInterval: 10000
-				},function(){
-					console.log("- setConfig success");
-				}, function(){
-					console.warn("- Failed to setConfig");
-				});
-				
-				//start geofence only tracking mode
-				bgGeo.startGeofences(function(state) {
-					console.log('- Geofence-only monitoring started', state.trackingMode);
-				});
-			}
 		}
-	 
 		bgGeo.finish(taskId);
 	});
 })
