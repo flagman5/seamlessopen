@@ -115,7 +115,8 @@ myApp.onPageInit('home', function (page) {
 			  var maxNumGeofences = geofences.length;
 			  for (var i=0; i<maxNumGeofences; i++ ) {
 				if(geofences[i].identifier == params.identifier) {
-					params.location = geofences[i].location;
+					params.location.coords.latitude = geofences[i].latitude;
+					params.location.coords.longitude = geofences[i].longitude;
 				}
 			  }
 			}, function(error) {
