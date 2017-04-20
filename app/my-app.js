@@ -12,6 +12,7 @@ var mainView = myApp.addView('.view-main', {
 
 //global?
 var bgGeo;
+var triggedFences = [];
 
 // Handle Cordova Device Ready Event
 $$(document).on('deviceready', function() {
@@ -100,94 +101,75 @@ myApp.onPageInit('home', function (page) {
 	});
 	
 	//now listen to geofence crossings
-	// Listen to geofences
-	var triggedFences = [];
+	// Listen to geofences which is only set on dwell trigger with a long loiterdelay, so no false alarms
+	
 	bgGeo.on('geofence', function(params, taskId) {
 		
 		var geoFenceLocation    = params.location;
 		var geoFenceidentifier  = params.identifier;
-		var geoFenceAction = params.action;
-		//we only care about triggers that are done without a car or bicycle
-		if(geoFenceLocation.activity != 'in_vehicle' && geoFenceLocation.activity != 'on_bicycle') {
-			
-			//first get the center of fence and replace it with location, we cant handle calculating with respect to house orientation
-			var geoFenceCenter;
-			bgGeo.getGeofences(function(geofences) {
-				  var maxNumGeofences = geofences.length;
-				  for (var i=0; i<maxNumGeofences; i++ ) {
-					if(geofences[i].identifier == params.identifier) {
-						params.location = geofences[i].location;
-					}
-				  }
-				}, function(error) {
-				  console.warn("Failed to fetch geofences from server");
+		var geoFenceAction 		= params.action;
+		
+		//first get the center of fence and replace it with location, we cant handle calculating with respect to house orientation
+		var geoFenceCenter;
+		bgGeo.getGeofences(function(geofences) {
+			  var maxNumGeofences = geofences.length;
+			  for (var i=0; i<maxNumGeofences; i++ ) {
+				if(geofences[i].identifier == params.identifier) {
+					params.location = geofences[i].location;
+				}
+			  }
+			}, function(error) {
+				console.warn("Failed to fetch geofences from server");
+		});
+
+		//add to list of trigged fences
+		triggedFences.push(params);
+		
+		//start aggressive tracking
+		if(checkAggressive() == 0) {
+			//stop the geofenceonly mode?
+			bgGeo.stop();
+
+			//config location tracking with highest accuracy
+			bgGeo.setConfig({
+				desiredAccuracy: 0,
+				distanceFilter: 5,
+				activityRecognitionInterval: 0
+			},function(){
+			   console.log("- setConfig success");
+			}, function(){
+			   console.warn("- Failed to setConfig");
 			});
-
-			//add to list of trigged fences
-			triggedFences.push(params);
-
-
-			if(geoFenceAction == 'ENTER') {
-
-				//first check the state of the plugin, if already aggressive, then no need to restart it   
-				if(checkAggressive() == 0) {
-				  //stop the geofenceonly mode?
-				  bgGeo.stop();
-
-				  //config location tracking with highest accuracy
-				  bgGeo.setConfig({
-					desiredAccuracy: 0,
-					distanceFilter: 5,
-					activityRecognitionInterval: 0
-				  },function(){
-					  console.log("- setConfig success");
-				  }, function(){
-					  console.warn("- Failed to setConfig");
-				  });
-				  //turn on plugin normally
-				  bgGeo.start();
-				}
-				else {
-					//secondary geofence trigger, restart the aggressive tracking
-					bgGeo.stopWatchPosition();
-				}
-
-				//aggressive tracking
-				startAggressiveTracking(triggedFences, deviceID);
-			}
-			else if(geoFenceAction == 'EXIT') {
-				//have to check if user is in another geofence, if not, can simply resume tracking only mode
-
-				//first remove the one exited
-				for(var i = triggedFences.length - 1; i >= 0; i--) {
-					if(triggedFences[i].identifier == geoFenceidentifier) {
-					   triggedFences.splice(i, 1);
-					}
-				}
-
-				//check if in aggressive mode, only reset if in aggressive mode
-				if(triggedFences.length == 0 && checkAggressive() == 1) {
-					//no more gfences, resume tracking only mode
-					bgGeo.stop();
-
-					bgGeo.setConfig({
-						desiredAccuracy: 1000,
-						distanceFilter: 10,
-						activityRecognitionInterval: 10000
-					},function(){
-						console.log("- setConfig success");
-					}, function(){
-						console.warn("- Failed to setConfig");
-					});
-
-					//start geofence only tracking mode
-					bgGeo.startGeofences(function(state) {
-						console.log('- Geofence-only monitoring started', state.trackingMode);
-					});
+			
+			//turn on plugin normally
+			bgGeo.start();
+		}
+		
+		bgGeo.finish(taskId);
+	});
+	
+	//here listen to location events, this function should only be used during aggressive tracking
+	bgGeo.on('location', function(location, taskId) {
+		
+		if(checkAggressive() == 1) {
+			var currentLocation = '';
+			var distanceToListing = '';
+			
+			currentLocation = location;
+			var index;
+			for(index=0;index < triggedFences.length; index++) {
+				var geoFence = triggedFences[index];
+				distanceToListing = haversineDistance([geoFence.location.coords.latitude, geoFence.location.coords.longitude], [currentLocation.coords.latitude, currentLocation.coords.longitude], false);
+				if(distanceToListing < 10) {
+					//this is good enough, set it as the target and stop aggressive tracking, empty all trigged fences
+					recordVisitAndStopAggressive(geoFence.identifier, deviceID);
+					break;
 				}
 			}
 		}
 		bgGeo.finish(taskId);
+	   }, function(errorCode) {
+		console.log('An location error occurred: ' + errorCode);
 	});
 })
 
@@ -301,55 +283,16 @@ $$(document).on('pageInit', '.page[data-page="about"]', function (e) {
     myApp.alert('Here comes About page');
 })
 */
-function checkAggressive() {
-
-	 bgGeo.getState(function(state) {
-		var currentAccuracy = state.desiredAccuracy;
-		if(currentAccuracy == 0) {
-			// already in aggressive state
-			return 1;
-		}
-     });
-	 
-	 return 0;
-		   
-}
-function startAggressiveTracking(triggedFences, deviceID) {
+function recordVisitAndStopAggressive(geoFenceIdentifier, deviceID) {
+	//empty/reset the trigged fences array
+	triggedFences = [];
 	
-	var currentLocation = '';
-	var distanceToListing = '';
-		
-	//now get the geofence that was cross and calculate its center and current location
-	bgGeo.watchPosition(function(location) {
-		currentLocation = location;
-		var index;
-		for(index=0;index < triggedFences.length; index++) {
-			var geoFence = triggedFences[index];
-			distanceToListing = haversineDistance([geoFence.location.coords.latitude, geoFence.location.coords.longitude], [currentLocation.coords.latitude, currentLocation.coords.longitude], false);
-			if(distanceToListing < 10) {
-				//this is good enough, set it as the target and stop tracking
-				recordVisit(geoFence.identifier, deviceID);
-			}
-		}
-	}, function(errorCode) {
-		console.log('An location error occurred: ' + errorCode);
-	}, {
-		interval: 2000,    // <-- retrieve a location every 5s.
-		persist: false,    // <-- default is true
-	});
-	
-	return;
-	
-}
-function recordVisit(geoFenceIdentifier, deviceID) {
-	
+	//send info to server
 	$$.ajax({
 		type: "POST",
 		data: { visited: geoFenceIdentifier, deviceUUID: deviceID},
 		url: 'http://localhost:8082/seamlessopen/recordVisit.php',
-		success: function(data) {
-			bgGeo.stopWatchPosition();
-			
+		success: function(data) {			
 			//stop the service
 			bgGeo.stop();
 			
@@ -378,7 +321,22 @@ function recordVisit(geoFenceIdentifier, deviceID) {
 
 	return;
 	
+	
 }
+function checkAggressive() {
+
+	 bgGeo.getState(function(state) {
+		var currentAccuracy = state.desiredAccuracy;
+		if(currentAccuracy == 0) {
+			// already in aggressive state
+			return 1;
+		}
+     });
+	 
+	 return 0;
+		   
+}
+
 function haversineDistance(coords1, coords2, isMiles) {
   function toRad(x) {
     return x * Math.PI / 180;
