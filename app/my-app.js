@@ -107,21 +107,7 @@ myApp.onPageInit('home', function (page) {
 		
 		var geoFenceLocation    = params.location;
 		var geoFenceidentifier  = params.identifier;
-		var geoFenceAction 		= params.action;
-		
-		//first get the center of fence and replace it with location, we cant handle calculating with respect to house orientation
-		var geoFenceCenter;
-		bgGeo.getGeofences(function(geofences) {
-			  var maxNumGeofences = geofences.length;
-			  for (var i=0; i<maxNumGeofences; i++ ) {
-				if(geofences[i].identifier == params.identifier) {
-					params.location.coords.latitude = geofences[i].latitude;
-					params.location.coords.longitude = geofences[i].longitude;
-				}
-			  }
-			}, function(error) {
-				console.warn("Failed to fetch geofences from server");
-		});
+		var geoFenceAction 	= params.action;
 
 		//add to list of trigged fences
 		triggedFences.push(params);
@@ -160,7 +146,7 @@ myApp.onPageInit('home', function (page) {
 			var index;
 			for(index=0;index < triggedFences.length; index++) {
 				var geoFence = triggedFences[index];
-				distanceToListing = haversineDistance([geoFence.location.coords.latitude, geoFence.location.coords.longitude], [currentLocation.coords.latitude, currentLocation.coords.longitude], false);
+				distanceToListing = haversineDistance([geoFence.extras.center.latitude, geoFence.extras.center.longitude], [currentLocation.coords.latitude, currentLocation.coords.longitude], false);
 				if(distanceToListing < 10) {
 					//this is good enough, set it as the target and stop aggressive tracking, empty all trigged fences
 					recordVisitAndStopAggressive(geoFence.identifier, deviceID);
