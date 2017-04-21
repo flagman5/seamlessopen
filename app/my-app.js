@@ -67,6 +67,9 @@ $$(document).on('deviceready', function() {
 		debug: true,  // <-- Debug sounds & notifications.
 		stopOnTerminate: false,
 		startOnBoot: true,
+		
+		//geofence
+		geofenceInitialTriggerEntry: false,
 		}, function(state) {
 			// This callback is executed when the plugin is ready to use.
 			console.log("BackgroundGeolocation ready: ", state);
