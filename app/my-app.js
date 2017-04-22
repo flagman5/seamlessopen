@@ -152,7 +152,7 @@ myApp.onPageInit('home', function (page) {
 				distanceToListing = haversineDistance([geoFence.extras.center.latitude, geoFence.extras.center.longitude], [currentLocation.coords.latitude, currentLocation.coords.longitude], false);
 				if(distanceToListing < 10) {
 					//this is good enough, set it as the target and stop aggressive tracking, empty all trigged fences
-					recordVisitAndStopAggressive(geoFence.identifier, deviceID);
+					recordVisitAndStopAggressive(geoFence.identifier);
 					break;
 				}
 			}
@@ -273,14 +273,18 @@ $$(document).on('pageInit', '.page[data-page="about"]', function (e) {
     myApp.alert('Here comes About page');
 })
 */
-function recordVisitAndStopAggressive(geoFenceIdentifier, deviceID) {
+function recordVisitAndStopAggressive(geoFenceIdentifier) {
 	//empty/reset the trigged fences array
 	triggedFences = [];
+	
+	//email
+	var storedData = myApp.formGetData('my-form');
+	var user_email = storedData[email];
 	
 	//send info to server
 	$$.ajax({
 		type: "POST",
-		data: { visited: geoFenceIdentifier, deviceUUID: deviceID},
+		data: { visited: geoFenceIdentifier, email: user_email},
 		url: 'http://localhost:8082/seamlessopen/recordVisit.php',
 		success: function(data) {			
 			//stop the service
