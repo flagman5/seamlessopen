@@ -279,7 +279,7 @@ function recordVisitAndStopAggressive(geoFenceIdentifier) {
 	
 	//email
 	var storedData = myApp.formGetData('my-form');
-	var user_email = storedData[email];
+	var user_email = storedData['email'];
 	
 	//send info to server
 	$$.ajax({
