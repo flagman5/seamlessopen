@@ -5,6 +5,7 @@ $realtor_search_array = array("realtor", "real estate agent", "real estate", "re
 
 // Include the required dependencies.
 require_once( 'vendor/autoload.php' );
+include("db_config");
 
 // Initialize the Facebook PHP SDK v5.
 $fb = new Facebook\Facebook([
@@ -74,7 +75,7 @@ function contains($str, array $arr)
 }
 
 function checkAreaCode($area_code, $state) {
-  
+  $conn = db_connect();
   $sql = "SELECT state FROM area_codes_to_state WHERE area_code = '".$area_code."'";
   $result = $conn->query($sql);
   if($result->num_rows > 0) {
