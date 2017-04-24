@@ -73,3 +73,13 @@ function contains($str, array $arr)
     return false;
 }
 
+function checkAreaCode($area_code, $state) {
+  
+  $sql = "SELECT state FROM area_codes_to_state WHERE area_code = '.$area_code."'";
+  $result = $conn->query($sql);
+  if($result->num_rows > 0) {
+      $row = $result->fetch_assoc();
+      if($state == $row['state']) { return true; }
+  }
+  return false;
+}
