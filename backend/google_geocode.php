@@ -18,7 +18,17 @@ function google_geocode($street, $city, $state, $zipcode) {
 }
 
 
-function google_reverse($lat, $lon) {
+function google_reverse($geoloc) {
 
+	$url = "https://maps.googleapis.com/maps/api/geocode/json?latlng=".$geoloc."&key=AIzaSyBM-1Soai9yr7y6ZjvEEeDX-ENa4CGHAAg";
+	
+	$result = json_decode(do_curl($url), TRUE);
+	$components = $result['results'][0]['address_components'];
+	foreach($components as $comp) {
+		if($comp['types'][0] == 'postal_code') {
+			$zipcode = $comp['short_name'];
+			return $zipcode;
+		}
+	}	
 
 }
