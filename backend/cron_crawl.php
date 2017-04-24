@@ -32,23 +32,28 @@ if($today == 3) {
 }
 
 //now get all zipcodes in user profiles and current location reports
-$sql = "SELECT distinct zipcode FROM users";
-$result = $conn->query($sql);
+$sql_array = array("SELECT distinct zipcode FROM users", "SELECT distinct zipcode FROM location_reports");
+foreach($sql_array as $sql) {
+	
+	$result = $conn->query($sql);
 
-if($result->num_rows > 0) {
-	while($row = $result->fetch_assoc()) {
-		//for each zipcode
-		$zipcode = $row['zipcode'];
-		crawl_homefinder($zipcode);
-		
-		$sql = "SELECT to_zip_code FROM zip_code_distances WHERE from_zip_code = '".$zipcode."' AND distance <= 80";
-		$nearby_zips = $conn->query($sql);
-		while($zip_row = $nearby_zips->fetch_assoc()) {
+	if($result->num_rows > 0) {
+		while($row = $result->fetch_assoc()) {
+			//for each zipcode
+			$zipcode = $row['zipcode'];
+			crawl_homefinder($zipcode);
 			
-			$nearby_zipcode = $zip_row['to_zip_code'];
+			$sql = "SELECT to_zip_code FROM zip_code_distances WHERE from_zip_code = '".$zipcode."' AND distance <= 80";
+			$nearby_zips = $conn->query($sql);
+			while($zip_row = $nearby_zips->fetch_assoc()) {
+				
+				$nearby_zipcode = $zip_row['to_zip_code'];
+				
+				crawl_homefinder($nearby_zipcode);
 			
-			crawl_homefinder($nearby_zipcode);
-		
+			}
 		}
 	}
+
 }
+
