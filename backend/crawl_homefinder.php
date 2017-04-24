@@ -53,7 +53,7 @@ function parse_results($result) {
 	
 	//check if exists
 	$sql = "SELECT * FROM open_listings WHERE street='".$street."' and city='".$city."' and state='".$state." and zipcode='".$zipcode."'";
-	$result = $conn->query($sql);
+	$result = do_query($sql);
 	if($result->num_rows == 0) {
 		//call google to get geocoordinates
 		$coordinates = explode(",", google_geocode($street, $city, $state, $zipcode));
@@ -65,7 +65,7 @@ function parse_results($result) {
 		$sql = "INSERT INTO open_listings (street, city, state, zipcode, agent, agency, longitude, latitude, contact_email)
 			VALUES('".$street."','".$city."','".$state."','".$zipcode."','".$agent."','".$agency."','".$coordinates[1]."','".$coordinates[0]."','".$contact_email."')";
 			
-		$conn->query($sql);
+		do_query($sql);
 	}
   } 
 }
