@@ -3,6 +3,8 @@
 include("db_config.php");
 include("crawl_homefinder.php");
 
+$conn = db_connect();
+
 //this script needs to run 2x daily wed, thurs, fri, sat, sun. On wed, create a new table and archive the old one
 $today = date('N', time());
 
