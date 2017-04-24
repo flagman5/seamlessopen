@@ -1,5 +1,7 @@
 <?php
+include("db_config.php");
 include("common.php");
+include("google_geocode.php");
 
 //requires the zipcode
 function crawl_homefinder($zip) {
@@ -48,6 +50,21 @@ function parse_results($result) {
     $agent = $matches[1];
     preg_match("/brand\">\s(.*)<\/div>\s<div/", $parts[5], $matches);
     $agency = $matches[1];
-    
+	
+	//call google to get geocoordinates
+	$coordinates = explode(",", google_geocode($street, $city, $state, $zipcode));
+	
+	//now call FB to get the agent email
+	$contact_email = fb_find($agent, $agency);
+	
+	//insert into DB if not exist
+	$sql = "SELECT * FROM open_listings WHERE street='".$street."' and city='".$city."' and state='".$state." and zipcode='".$zipcode."'";
+	$result = $conn->query($sql);
+	if($result->num_rows == 0) {
+		$sql = "INSERT INTO open_listings (street, city, state, zipcode, agent, agency, longitude, latitude, contact_email)
+			VALUES('".$street."','".$city."','".$state."','".$zipcode."','".$agent."','".$agency."','".$coordinates[1]."','".$coordinates[0]."','".$contact_email."')";
+			
+		$conn->query($sql);
+	}
   } 
 }
