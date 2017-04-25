@@ -33,7 +33,7 @@ function crawl_homefinder($zip) {
 
 function parse_results($result) {
  
-  $listing_array = explode('<div class="resultsBands last" itemscope itemtype="http://schema.org/SingleFamilyResidence">', $result]);
+  $listing_array = explode('<div class="resultsBands last" itemscope itemtype="http://schema.org/SingleFamilyResidence">', $result);
   
   foreach($listings_array as $listing) {
     $parts = explode("<meta itemprop=", $listing);
