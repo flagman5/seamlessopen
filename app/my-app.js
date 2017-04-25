@@ -84,6 +84,18 @@ myApp.onPageInit('home', function (page) {
 	
 	checkLogin();
 	
+	$$('#manual_send').on('click', function() {
+		//just get user info into email body 
+		var storedData = myApp.formGetData('my-form');
+		var mail_body = '';
+		for (var key in storedData) {
+			mail_body += key+": "+storedData[key]+"\n";
+		}
+		var subject = "Hello, here is my buyer's information";
+		window.location.href = 'mailto:?subject=' + subject + '&body=' + mail_body;
+		
+	});
+	
 	$$('#start_tracking').on('click', function() {
 	
 		if($$(this).text() == 'Start house hunting') {
@@ -457,6 +469,7 @@ function checkLogin() {
 		$$('#logged_in').show();
 		$$('#setup_link').hide();
 		$$('#edit_profile').show();
+		$$('#manual_send').show();
 		
 		//do ajax register..although not really register
 		$$.ajax({
@@ -478,6 +491,7 @@ function checkLogin() {
 		$$('#logged_in').hide();
 		$$('#setup_link').show();
 		$$('#edit_profile').hide();
+		$$('#manual_send').hide();
 	  }
 }
 /*
