@@ -10,8 +10,13 @@ function google_geocode($street, $city, $state, $zipcode) {
 	
 	$result = json_decode(do_curl($url), true);
 	
-	$lat = $result['results'][0]['geometry']['location']['lat'];
-	$long = $result['results'][0]['geometry']['location']['long'];
+	$lat = $long = '';
+	
+	if($result['results'][0]['geometry']['location_type'] == 'ROOFTOP') {
+	
+		$lat = $result['results'][0]['geometry']['location']['lat'];
+		$long = $result['results'][0]['geometry']['location']['long'];
+	}
 	
 	return $lat.','.$long;
 
