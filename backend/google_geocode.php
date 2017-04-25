@@ -25,7 +25,7 @@ function google_geocode($street, $city, $state, $zipcode) {
 
 function google_reverse($geoloc) {
 
-	$url = "https://maps.googleapis.com/maps/api/geocode/json?latlng=".$geoloc."&key=AIzaSyBM-1Soai9yr7y6ZjvEEeDX-ENa4CGHAAg";
+	$url = "https://maps.googleapis.com/maps/api/geocode/json?latlng=".$geoloc."&key=";
 	
 	$result = json_decode(do_curl($url), TRUE);
 	$components = $result['results'][0]['address_components'];
