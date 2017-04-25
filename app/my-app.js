@@ -187,8 +187,14 @@ myApp.onPageInit('setup', function (page) {
 myApp.onPageInit('history', function (page) {
    //make ajax call to populate initial set
    //var uuid = device.uuid;
+   
+   	//email
+	var storedData = myApp.formGetData('my-form');
+	var user_email = storedData['email'];
+	
    $$.ajax({
 		type: "POST",
+		data:  {email: user_email},
 		url: 'http://localhost:8082/seamlessopen/getHistory.php',
 		beforeSend: function() {
 			myApp.showProgressbar();
@@ -203,8 +209,10 @@ myApp.onPageInit('history', function (page) {
 	});
 	
 	$$(document).on('click', '.actionSheet', function () {
-		var address = $$(this).children().children().html();
+		//var address = $$(this).children().children().html();
 		var email_on_file = $$(this).children().children().data('agentEmail');
+		var coded_address = $$(this).children().children().data('codedAddress');
+		var visit_timestamp = $$(this).children().children().data('timeVisit');
 		var button_text = '';
 		if(email_on_file == null) { 
 			button_text = 'We were unable to get the realtor email address for this listing';
@@ -220,14 +228,14 @@ myApp.onPageInit('history', function (page) {
 				
 			},
 			{
-				text: 'E-Mail your info to another address',
+				text: 'E-Mail your info manually',
 				onClick: function() {
 					$$.ajax({
 						type: "POST",
-						data: { listing: address},
+						data: { listing: coded_address, visit_time: visit_timestamp},
 						url: 'http://localhost:8082/seamlessopen/emailAgent.php',
 						success: function(data) {
-							var subject = 'Hello, someone just signed in to your open house';
+							var subject = 'Hello! Here is your personal link to your open house dashboard';
 							window.location.href = 'mailto:?subject=' + subject + '&body=' + data;
 						},
 						error: function(xhr, textStatus, errorThrown){
@@ -361,14 +369,23 @@ function haversineDistance(coords1, coords2, isMiles) {
 
 function getInitialLocation() {
 
-	navigator.geolocation.getCurrentPosition((function(_this) {
-	  return function(position) {
-		// Do something here
-		var currentPosition = 'Latitude=' + position.coords.latitude + ';Longitude=' + position.coords.longitude;
-		return currentPosition;
-	};
-	})(this), function(error) {
-	  var errorButton, errorMsg, errorTitle;
+	var options = {
+      enableHighAccuracy: false,
+	  maximumAge: 20000,
+	  timeout: 10000
+   }
+	
+   var watchID = navigator.geolocation.getCurrentPosition(onSuccess, onError, options);
+
+   function onSuccess(position) {
+
+     // Do something here
+	 var currentPosition = position.coords.latitude + ',' + position.coords.longitude;
+	 return currentPosition;
+   };
+
+   function onError(error) {
+      var errorButton, errorMsg, errorTitle;
 	  errorTitle = "Location Services";
 	  errorButton = "Ok";
 	  if (error.code === 1) {
@@ -383,11 +400,7 @@ function getInitialLocation() {
 	  if (error.code === 1 || error.code === 2 || error.code === 3) {
 		//throw ''; //this stops everything...
 	  }
-	}, {
-	  enableHighAccuracy: false,
-	  maximumAge: 20000,
-	  timeout: 10000
-	});
+   }
 
 }
 function validateEmail(email) {
@@ -444,6 +457,20 @@ function checkLogin() {
 		$$('#logged_in').show();
 		$$('#setup_link').hide();
 		$$('#edit_profile').show();
+		
+		//do ajax register..although not really register
+		$$.ajax({
+			type: "POST",
+			data: JSON.stringify(storedData),
+			contentType: "application/json",
+			url: 'http://localhost:8082/seamlessopen/register.php',
+			success: function(data) {			
+				//don't really do anything..
+			},
+			error: function(xhr, textStatus, errorThrown){
+				console.log("error in registering user");
+			}
+		});
 		
 	  }
 	  else {
