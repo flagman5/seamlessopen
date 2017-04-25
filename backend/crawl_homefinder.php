@@ -53,9 +53,11 @@ function parse_results($result) {
 	
 	//check if exists
 	$conn = db_connect();
-	$sql = "SELECT * FROM open_listings WHERE street='".$street."' and city='".$city."' and state='".$state." and zipcode='".$zipcode."'";
-	$result = $conn->query($sql);
-	if($result->num_rows == 0) {
+	$sql = "SELECT id FROM open_listings WHERE street= ? and city= ? and state= ? and zipcode= ?";
+	$stmt = $conn->prepare($sql);
+	$stmt->bind_param('sssi', $street, $city, $state, $zipcode);
+	$stmt->store_result();
+	if($stmt->num_rows == 0) {
 		//call google to get geocoordinates
 		$coordinates = explode(",", google_geocode($street, $city, $state, $zipcode));
 	
@@ -64,9 +66,12 @@ function parse_results($result) {
 	
 		//insert into DB 
 		$sql = "INSERT INTO open_listings (street, city, state, zipcode, agent, agency, longitude, latitude, contact_email)
-			VALUES('".$street."','".$city."','".$state."','".$zipcode."','".$agent."','".$agency."','".$coordinates[1]."','".$coordinates[0]."','".$contact_email."')";
-			
-		$conn->query($sql);
+			VALUES(?,?,?,?,?,?,?,?,?)";
+		$stmt2 = $conn->prepare($sql);
+		$stmt2->bind_param('sssisssss', $street, $city, $state, $zipcode, $agent, $agency, $coordinates[0], $coordinates[1], $contact_email);
+		$stmt2->execute();
+		$stmt2->close();
 	}
+	$stmt->close();
   } 
 }
